@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Between</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:260;--bg:hsl(var(--h) 32% 10%);--panel:hsl(var(--h) 26% 16%);--ink:hsl(var(--h) 60% 95%);--muted:hsl(var(--h) 22% 70%);--tile:hsl(var(--h) 42% 44%);--pur:hsl(var(--h) 72% 62%);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;display:flex;justify-content:center}
+main{width:100%;max-width:480px;padding:24px 16px 40px;text-align:center}
+h1{margin:0 0 4px;font-size:28px}
+.sub{margin:0 0 16px;color:var(--muted);font-size:15px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.abc{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:16px;font-weight:700;font-size:clamp(14px,4.2vw,18px)}
+.abc .line{display:flex;gap:4px}
+.abc span{width:clamp(18px,5.6vw,24px);text-align:center}
+.abc span.off{opacity:.2}
+.cap{font-size:12px;color:var(--muted);margin:6px 0}
+#stack{background:var(--panel);border-radius:12px;padding:10px 8px;margin-bottom:16px}
+.wr{display:flex;gap:4px;justify-content:center;margin:5px 0}
+.tile{width:clamp(34px,10vw,44px);height:clamp(34px,10vw,44px);border-radius:7px;display:grid;place-items:center;font-size:20px;font-weight:700;background:var(--tile);color:#fff;opacity:.55}
+.wr.near .tile{opacity:1;outline:2px solid var(--ink);outline-offset:-2px}
+.wr.secret .tile{background:transparent;border:2px dashed var(--muted);color:var(--muted);opacity:1}
+.wr.secret.shown .tile{background:var(--pur);border:0;color:#fff;font-weight:800;outline:3px solid var(--ink);outline-offset:-3px}
+input{font:inherit;font-size:20px;letter-spacing:4px;text-transform:uppercase;width:170px;padding:10px;border-radius:8px;border:2px solid var(--pur);background:transparent;color:var(--ink);text-align:center}
+button{font:inherit;font-weight:600;padding:10px 18px;border-radius:8px;border:0;background:var(--pur);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--ink);border:2px solid var(--muted)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+#msg{min-height:26px;font-weight:600;margin:12px 0}
+.win{background:var(--pur);color:#fff;border-radius:10px;padding:12px;font-size:22px;font-weight:800;max-width:360px;margin:0 auto;animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.win{animation:none}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<main>
+  <h1>Word Between</h1>
+  <p class="sub">The secret word is hidden between your guesses. Guess in alphabetical order to close the gap.</p>
+  <div class="abc" id="abc" aria-label="Possible first letters"></div>
+  <div id="stack"></div>
+  <div class="row"><input id="g" autocomplete="off" autocapitalize="characters" aria-label="Your guess"><button id="go">Guess</button></div>
+  <div id="msg" role="status"></div>
+  <div class="row"><button class="ghost" id="new">New word</button><button class="ghost" id="give">Give up</button></div>
+</main>
+<script>
+const WORDS={3:"CAT DOG SUN MAP BOX FOX HAT PEN CUP BED KEY ICE EGG JAM OWL ZOO SKY TOY BAG BUS CAR COW CRY CUT DAY EAR EYE FAN FIG FLY GUM HEN HOT INK JAR JET KIT LAP LEG LID MAT MUD NET NUT OIL PAN PEA PIE PIG RAT RED RUG SAD SEA TEA TIE TOP VAN WEB YAK ZIP".split(" "),4:"MOON STAR FISH BIRD CAKE LAMP ROAD KING JUMP QUIZ WAVE GOLD FROG BEAR BOAT BOOK CAMP CITY CORN DESK DOOR DUCK FARM FIRE FOOT GAME GIFT HAND HILL HOME IRON JAZZ KITE LAKE LEAF LION MILK NEST NOTE PARK RAIN RICE RING ROCK ROSE SAND SEED SHIP SILK SNOW SOUP SONG TREE WIND WOOL ZERO BELL BONE BOWL CLAY COAT DRUM FLAG GATE GLUE GRID HAWK HOLE JUNK KNOB LOCK MASK MINT OVEN PEAR PLUM POND RAFT SALT SOAP TENT TOWN VASE WALL YARD".split(" "),5:"PLANT CRANE STONE BRAIN CLOUD FLAME GRAPE HOUSE LIGHT MONEY NIGHT OCEAN PAINT QUIET RIVER SMILE TABLE WATER YOUNG ANGEL BEACH CHAIR DREAM EARTH FIELD GLASS HEART JUICE KNIFE LEMON MUSIC NORTH PIANO QUEEN ROUND SUGAR TRAIN UNDER VOICE WORLD BREAD CANDY DANCE EAGLE FRUIT GHOST HONEY LUNCH MOUNT PEACH SHEEP TIGER WHEAT ZEBRA STORM BLEND CRISP DRIFT FROST GRAIN SPARK APPLE BADGE BENCH BLOOM BOARD BRUSH CABIN CLOCK CORAL CROWN DAISY DOZEN FENCE FLOOR FLUTE GIANT GRASS HOTEL IGLOO JELLY KOALA LLAMA LUCKY MANGO MAPLE MARCH NOVEL OLIVE ONION OTTER PANDA PEARL PILOT PIZZA PLAZA QUILT RADIO RANCH ROBOT SALAD SCARF SHELL SKATE SMOKE SNAKE SPOON STAMP STEAM SWEET TOAST TOWER UNCLE VIDEO WHALE YACHT".split(" "),6:"GARDEN SILVER BRIDGE CASTLE FLOWER FOREST ISLAND JUNGLE MARKET ORANGE PLANET RABBIT SUMMER WINTER YELLOW BASKET CANDLE DINNER FRIEND GUITAR HAMMER INSECT JACKET KITTEN MIRROR NEEDLE PENCIL POCKET SCHOOL SPIRIT TICKET VALLEY WINDOW BUTTER CIRCLE DOCTOR ENGINE FINGER GOLDEN LISTEN MOMENT ANIMAL BOTTLE BRANCH BUBBLE CAMERA CARPET CHERRY COOKIE DESERT DRAGON FABRIC FOLDER GINGER HELMET JERSEY KETTLE MEADOW MONKEY MUSEUM NUMBER OYSTER PEPPER PILLOW POTATO PURPLE RIBBON SAILOR SALMON SHADOW SPIDER SPRING SQUARE TEMPLE TOMATO TUNNEL TURTLE VIOLIN WALLET WIZARD ZIPPER".split(" "),7:"BALANCE CAPTAIN DOLPHIN ELEMENT FREEDOM GARLAND HARVEST JOURNEY KITCHEN LANTERN MACHINE NETWORK OPINION PICTURE QUALITY RAINBOW SUNRISE TEACHER VILLAGE WEATHER ANCIENT BALLOON BICYCLE BLANKET CABBAGE CAMPING CHICKEN COMPASS CRYSTAL DIAMOND ECLIPSE FEATHER FOREVER GALLERY HOLIDAY JACKPOT KINGDOM LIBRARY MAGICAL MONSTER MUSTARD OCTOPUS PACKAGE PENGUIN QUARTER SCARLET SEASIDE STADIUM TRAFFIC UNICORN VOLCANO WARRIOR".split(" ")};
+const $=id=>document.getElementById(id);
+const HUES=[0,15,155,180,205,230,260,285,320];
+let secret,n,guesses,over,won,round=0,hue=-1;
+function wordRow(w,cls){return `<div class="wr ${cls}">${[...w].map(c=>`<div class="tile">${c}</div>`).join("")}</div>`}
+function draw(){
+  const above=guesses.filter(w=>w<secret).sort(),below=guesses.filter(w=>w>secret).sort();
+  const top=above[above.length-1],bot=below[0];
+  let h='<div class="cap">earlier in the dictionary</div>';
+  if(top)h+=wordRow(top,"near");
+  h+=`<div class="wr secret ${over?"shown":""}">${[...secret].map(c=>`<div class="tile">${over?c:"?"}</div>`).join("")}</div>`;
+  if(bot)h+=wordRow(bot,"near");
+  h+='<div class="cap">later in the dictionary</div>';
+  $("stack").innerHTML=h;
+  const lo=top?top[0]:"A",hi=bot?bot[0]:"Z";
+  $("abc").innerHTML=["ABCDEFGHIJKLM","NOPQRSTUVWXYZ"].map(l=>`<div class="line">${[...l].map(c=>`<span class="${c>=lo&&c<=hi?"":"off"}">${c}</span>`).join("")}</div>`).join("");
+}
+function start(){
+  round++;
+  let h;do{h=HUES[Math.floor(Math.random()*HUES.length)]}while(h===hue);
+  hue=h;document.documentElement.style.setProperty("--h",h);
+  n=3+Math.floor(Math.random()*5);
+  const list=[...WORDS[n]].sort();
+  const k=1+Math.floor(Math.random()*(list.length-2));
+  secret=list[k];
+  const lo=list[Math.floor(Math.random()*k)],hi=list[k+1+Math.floor(Math.random()*(list.length-k-1))];
+  guesses=[lo,hi];over=false;won=false;
+  $("msg").textContent="";$("g").value="";$("g").maxLength=n;$("g").disabled=false;$("go").disabled=false;
+  draw();$("g").focus();
+}
+function guess(){
+  if(over)return;
+  const w=$("g").value.toUpperCase().trim();
+  if(!new RegExp(`^[A-Z]{${n}}$`).test(w)){$("msg").textContent=`Type exactly ${n} letters.`;return}
+  if(guesses.includes(w)){$("msg").textContent="You already tried that word.";return}
+  guesses.push(w);$("g").value="";
+  if(w===secret){
+    over=won=true;$("g").disabled=true;$("go").disabled=true;
+    $("msg").innerHTML=`<div class="win">You won round ${round}!</div>`;
+    draw();confetti();
+  }else{
+    $("msg").textContent=w<secret?"The secret word comes later.":"The secret word comes earlier.";
+    draw();$("g").focus();
+  }
+}
+function giveUp(){
+  if(over)return;
+  over=true;$("g").disabled=true;$("go").disabled=true;
+  $("msg").textContent=`You gave up. The word was ${secret}.`;draw();
+}
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const c=document.createElement("canvas");c.id="confetti";c.width=innerWidth;c.height=innerHeight;document.body.append(c);
+  const x=c.getContext("2d"),cols=[0,45,150,200,260,320].map(h=>`hsl(${h} 85% 55%)`);
+  const ps=Array.from({length:150},()=>({x:innerWidth/2+(Math.random()-.5)*160,y:innerHeight*.35,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,s:6+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.floor(Math.random()*cols.length)]}));
+  let t=0;
+  (function f(){
+    x.clearRect(0,0,c.width,c.height);t++;
+    ps.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});
+    if(t<160)requestAnimationFrame(f);else c.remove();
+  })();
+}
+$("go").onclick=guess;
+$("g").onkeydown=e=>{if(e.key==="Enter")guess()};
+$("give").onclick=giveUp;
+$("new").onclick=start;
+start();
+</script>
+</body>
+</html>
